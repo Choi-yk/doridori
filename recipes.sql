@@ -3,6 +3,8 @@
 
 -- -------------- 모든 테이블에 날짜형 넣기! --------------
 
+use dorecipe;
+
 create table member(
 -- 회원테이블
 	member_id varchar(20) not null primary key,

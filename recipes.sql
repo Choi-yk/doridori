@@ -1,149 +1,143 @@
--- create database recipes;
--- use recipes;
-
--- -------------- 모든 테이블에 날짜형 넣기! --------------
-
 use dorecipe;
 
-create table member(
--- 회원테이블
-	member_id varchar(20) not null primary key,
+create table member( -- 회원테이블
+    member_id varchar(20) not null primary key,
     member_pwd varchar(20) not null,
     member_name varchar(20) not null,
-    member_email varchar(20) not null,
+    member_email varchar(40) not null unique,
     member_gender varchar(4) not null,
-    member_birth datetime(6) not null, -- 생일
+    member_birth datetime(6) not null ,
     member_phone varchar(11) not null,
+    member_imagePath varchar(200),
     member_joinDate datetime(6) not null,
-    role varchar(10) not null -- 역할: 유저 / 관리자로 나뉨
+    member_role varchar(10) not null -- 이용자 역할 : admin & user
 );
 
--- 레시피 테이블 (레시피 등록 화면)
-create table recipe(
-	recipe_num int auto_increment primary key,
-	recipe_title varchar(100) not null,
-	recipe_introduce varchar(200),
-	recipe_url varchar(40), -- 동영상 url
-	recipe_rImagPath varchar(40), -- 대표 이미지 경로
-	recipe_tag varchar(50),
-	recipe_createDate datetime(6) not null,
-	member_id varchar(20) not null,
-    
-    -- 레시피 카테고리
-    category_kind varchar(20), -- 종류별
-    category_theme varchar(20), -- 상황/테마별
-    category_way varchar(20), -- 방법별
-    category_ing varchar(20),  -- 재료별
-    
-    -- 레시피 요리정보
-    information_person varchar(10), -- 인원
-    information_time varchar(10), -- 시간
-    information_level varchar(10), -- 난이도
-    
-    -- 레시피 요리완성 (이미지 4개)
-    completion_imagePath1 varchar(40),
-    completion_imagePath2 varchar(40),
-    completion_imagePath3 varchar(40),
-    completion_imagePath4 varchar(40),
-    completion_tip varchar(200),
-    
-	foreign key(member_id) references member(member_id) -- member 테이블의 기본키인 member_id를 외래키로 삼음
+create table recipe(  -- 레시피테이블
+    recipe_num int auto_increment  primary key , -- 1 :레시피 번호 
+    recipe_title varchar(100) not null,   -- 2: 레시피 제목
+    recipe_savetype int, -- 3: 저장 타입 (저장 :0, 임시저장 : 1) 
+    recipe_introduce varchar(1000), -- 4:레시피 소개
+    recipe_url varchar(40), -- 5: 이미지 영상 url
+    recipe_rpath varchar(200),   -- 6: 대표이미지 경로
+    category_kind varchar(20) default '종류',   -- 8: 레시피 종류
+    category_theme varchar(20) default '테마', -- 9 : 레시피 테마
+    category_way varchar(20)  default '방법', -- 10 : 레시피 방법 
+    category_ing varchar(20) default '재료', -- 11 : 레시피 재료
+    information_person varchar(10) default '인원', -- 12 : 요리 정보 (인원)
+    information_time varchar(10)  default '시간', -- 13: 요리 정보 (시간)
+    information_level varchar(10) default '난이도', -- 14: 요리 정보 (난이도)
+    completion_path1 varchar(200), -- 15: 완성 사진 경로1
+    completion_path2 varchar(200), -- 16: 완성 사진 경로2
+    completion_path3 varchar(200), -- 17: 완성 사진 경로3
+    completion_path4 varchar(200), -- 18: 완성 사진 경로4
+    completion_tip varchar(200), -- 19: 레시피 팁(요령)
+    recipe_creDate datetime(6) not null, -- 20: 레시피 팁(요령)
+    member_id varchar(20) not null, -- 21: 멤버 아이디 (fk)
+    foreign key (member_id) 
+    references member(member_id)
+    -- 자동 변경/삭제
+      ON UPDATE CASCADE
+      ON DELETE CASCADE
 );
 
--- 레시피 좋아요 테이블
-create table recipe_like(
-	member_id varchar(20),
+create table r_like( -- 레시피좋아요테이블
+   member_id varchar(20),
     recipe_num int not null,
-    l_like int,
-    primary key(member_id, recipe_num), -- pk 복합키
-	foreign key(member_id) references member(member_id),
-    foreign key(recipe_num) references recipe(recipe_num)
+    likes int,
+    primary key(member_id,recipe_num),                
+    foreign key (member_id) references member(member_id)
+      ON UPDATE CASCADE
+      ON DELETE CASCADE, 
+    foreign key (recipe_num) references recipe(recipe_num)
+      ON UPDATE CASCADE
+      ON DELETE CASCADE
 );
 
--- 레시피 신고 테이블
-create table recipe_report(
-	member_id varchar(20),
-    recipe_num int not null,
-    l_report int,
-    primary key(member_id, recipe_num), -- pk 복합키
-    foreign key(member_id) references member(member_id),
-    foreign key(recipe_num) references recipe(recipe_num)
+create table r_ingredient( -- 재료테이블
+   recipe_num int,
+    ing_num int,
+    ing_ingredient varchar(40),
+    ing_amount varchar(40),   
+    primary key(recipe_num,ing_num),               
+    foreign key (recipe_num) references recipe(recipe_num)
+   ON UPDATE CASCADE
+    ON DELETE CASCADE
 );
 
-
-create table recipe_ingredient(
--- 레시피 요리재료 테이블
-	recipe_num int,
-    ingredient_num int, -- 재료 번호 ex) 스테이크 소스 --> auto increment하면 다음 레시피의 번들의 번호가 1부터 시작하지 않음
-    ingredient_bundle varchar(20),
-    ingredient_bundle_ing varchar(20), -- 번들에 필요한 재료
-    ingredient_bundle_amount varchar(20),
-    primary key(recipe_num, ingredient_num),
-    foreign key(recipe_num) references recipe(recipe_num)
+create table r_order( -- 레시피요리순서테이블
+   recipe_num int, -- 레시피 번호
+    order_num int, -- 순서 번호 
+    order_explain varchar(500), -- 설명
+    order_path varchar(200), -- 이미지 경로
+    primary key(recipe_num,order_num),                         
+    foreign key (recipe_num) references recipe(recipe_num)
+      ON UPDATE CASCADE
+      ON DELETE CASCADE
 );
 
-create table recipe_order(
--- 레시피 요리순서 테이블
-	recipe_num int,
-    order_num int auto_increment,
-    order_explain varchar(200),
-    order_imagePath varchar(40),
-    primary key(recipe_num, order_num),
-    foreign key(recipe_num) references recipe(recipe_num)
-);
-
--- 코멘트 테이블
-create table comment(
-	recipe_num int not null,
-    comment_num int auto_increment primary key,
-    comment_content varchar(255), -- 댓글 내용
-    comment_imagePath varchar(40),
-    
+create table comment( -- 코멘트테이블
+   recipe_num int,
+    comment_num int,
+    comment_content varchar(255) not null,
+    comment_path varchar(200),
     member_id varchar(20) not null,
-    comment_createDate datetime(6) not null,
-    foreign key(member_id) references member(member_id),
-    foreign key(recipe_num) references recipe(recipe_num)
+    comment_creDate datetime(6) not null,
+    primary key(recipe_num,comment_num),
+    foreign key (member_id) references member(member_id)
+       ON UPDATE CASCADE
+    ON DELETE CASCADE
+    ,
+    foreign key (recipe_num) references recipe(recipe_num)
+       ON UPDATE CASCADE
+    ON DELETE CASCADE
 );
 
--- 노하우 테이블
-create table knowhow(
-	knowhow_id int auto_increment primary key,
+create table knowhow(  -- 노하우테이블
+   know_num int auto_increment primary key,
     member_id varchar(20) not null,
-    knowhow_title varchar(100) not null,
-    knowhow_content TEXT not null,
-    knowhow_createDate datetime(6) not null,
-    knowhow_imagePath varchar(40),
-    foreign key(member_id) references member(member_id)
+    know_title varchar(100) not null,
+    know_content TEXT not null,
+    know_creDate date not null,
+    know_path varchar(200),
+    foreign key (member_id) references member(member_id) 
+       ON UPDATE CASCADE
+    ON DELETE CASCADE
 );
 
---  운영자 추천 레시피 테이블 (마이페이지)
-create table recommendRecipe(
-	recommend_num int auto_increment primary key,
-    recommend_createDate datetime(6) not null,
-    member_id varchar(20) not null,
-    recipe_num int not null,
-    foreign key(member_id) references member(member_id),
-    foreign key(recipe_num) references member(recipe_num)
+create table recommendrecipe( -- 운영자추천레시피테이블
+   member_id varchar(20) not null,
+   recipe_num int not null,
+    reco_num int auto_increment primary key,
+    reco_creDate date not null,
+    foreign key (recipe_num) references recipe(recipe_num)
+       ON UPDATE CASCADE
+      ON DELETE CASCADE, 
+    foreign key (member_id) references member(member_id)
+       ON UPDATE CASCADE
+      ON DELETE CASCADE
 );
 
---  이벤트 테이블
-create table recommendRecipe(
-	event_num int auto_increment primary key,
-    event_title varchar(100) not null,
-    event_content TEXT,
-    event_imagePath varchar(40),
-    event_createDate datetime(6) not null,
-    event_endDate datetime(6) not null,
+create table event( -- 이벤트테이블
+   event_num int auto_increment primary key,
     member_id varchar(20) not null,
-    foreign key(member_id) references member(member_id)
+   event_title varchar(100) not null,
+    event_content TEXT not null,
+    event_path varchar(200),
+    event_creDate date not null,
+    event_finDate date not null,
+    foreign key (member_id) references member(member_id) 
+       ON UPDATE CASCADE
+      ON DELETE CASCADE
 );
 
--- 공지사항 테이블
-create table notice(
-	notice_num int auto_increment primary key,
-    notice_title varchar(20) not null,
-    notice_content TEXT,
-    notice_createDate datetime(6) not null,
+create table notice( -- 공지사항테이블
+   notice_num int auto_increment primary key,
     member_id varchar(20) not null,
-    foreign key(member_id) references member(member_id)
+    notice_title varchar(100) not null,
+    notice_content TEXT not null,
+    notice_creDate date not null,
+    foreign key (member_id) references member(member_id) 
+       ON UPDATE CASCADE
+      ON DELETE CASCADE
 );
